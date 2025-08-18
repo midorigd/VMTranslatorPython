@@ -8,30 +8,38 @@ The assembler takes a single `.vm` file or a directory of `.vm` files as a comma
 
 VMTranslator: Program entry point  
 
-CodeWriter: _  
-Parser: _  
-VMTranslator: _  
+### src
+
+CodeWriter: Writes assembly commands to output  
+Parser: Handles input filestream and categorizes commands and arguments  
+VMConstants: Enums for commands, segments, and operators  
+VMTranslator: Drives the translation process  
+
+### utils
+
+ArrayStack: A simple Python implementation of a stack
 
 ## Building the project
 
 Run the following from the terminal:
 
 ```zsh
-git clone https://github.com/midorigd/HackAssemblerPython
+git clone https://github.com/midorigd/VMTranslatorPython
 cd HackAssemblerPython
 ```
 
 ## Running the project
 
-Run the following from the project directory:
+Run one of the following from the project directory:
 
 ```zsh
-python3 -m HackAssembler path/to/file.asm
+python3 -m HackAssembler path/to/dir
+python3 -m HackAssembler path/to/file.vm
 ```
 
 ## Notes
 
-My C++ implementation of this project: [HackAssembler (C++)](https://github.com/midorigd/HackAssemblerCpp)
+My C++ implementation of this project: [coming soon]
 
 ## References
 

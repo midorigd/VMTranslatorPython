@@ -34,11 +34,9 @@ class Parser:
         
         if type is COMMAND.ARITHMETIC:
             return OP(self._current[0])
-            # return Parser._arithmeticLookup[self._current[0]]
         
         if type is COMMAND.PUSH or type is COMMAND.POP:
             return SEGMENT(self._current[1])
-            # return Parser._segmentLookup[self._current[1]]
         
         return self._current[1]
     
