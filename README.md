@@ -17,7 +17,7 @@ VMTranslator: Drives the translation process
 
 ### utils
 
-ArrayStack: A simple Python implementation of a stack
+ArrayStack: A simple implementation of a stack
 
 ## Building the project
 
@@ -25,7 +25,7 @@ Run the following from the terminal:
 
 ```zsh
 git clone https://github.com/midorigd/VMTranslatorPython
-cd HackAssemblerPython
+cd VMTranslatorPython
 ```
 
 ## Running the project
@@ -33,13 +33,13 @@ cd HackAssemblerPython
 Run one of the following from the project directory:
 
 ```zsh
-python3 -m HackAssembler path/to/dir
-python3 -m HackAssembler path/to/file.vm
+python3 -m VMTranslator path/to/dir
+python3 -m VMTranslator path/to/file.vm
 ```
 
 ## Notes
 
-My C++ implementation of this project: [coming soon]
+My C++ implementation of this project: [VMTranslator (C++)](https://github.com/midorigd/VMTranslatorCpp)
 
 ## References
 
