@@ -2,23 +2,15 @@ from src.VMConstants import *
 from utils.ArrayStack import ArrayStack
 
 class CodeWriter:
-    STACK_POINTER = 256
+    _STACK_POINTER = 256
 
-    INIT_FUNC = 'Sys.init'
-    TEMP_ADDR = 'addr'
-    TEMP_VAR = 'y'
-    RET_ADDR = 'retAddr'
-    END_FRAME = 'endFrame'
+    _INIT_FUNC = 'Sys.init'
+    _TEMP_ADDR = 'addr'
+    _TEMP_VAR = 'y'
+    _RET_ADDR = 'retAddr'
+    _END_FRAME = 'endFrame'
 
-    # trackers for reused command-specific labels
-    _arithLabelID = 0
-    _functionLabelID = 0
-    _returnAddressID = 0
-
-    _callStack = ArrayStack()
-
-    # lookup tables for commands and arguments
-    _offsetTable = {
+    _mappedSegments = {
         SEGMENT.LCL: 4,
         SEGMENT.ARG: 3,
         SEGMENT.THIS: 2,
@@ -27,17 +19,21 @@ class CodeWriter:
 
     def __init__(self, outFile: str, commentMode: bool):
         self._outFile = open(outFile, 'w')
-        self.commentMode = commentMode
+        self._commentMode = commentMode
+
+        # trackers for reused command-specific labels
+        self._arithLabelID = 0
+        self._functionLabelID = 0
+        self._returnAddressID = 0
+
+        self._callStack = ArrayStack()
+        self._callStack.push('')
 
     def loadFile(self, vmFile: str):
-        self._fileBasename = vmFile.rstrip('.vm')
+        self._filename = vmFile.removesuffix('.vm')
     
     def _currFunction(self):
-        if CodeWriter._callStack.isEmpty():
-            return ''
-            # raise Exception('callStack is empty')
-        
-        return CodeWriter._callStack.top()
+        return self._callStack.top()
     
     def _createBoundLabel(self, label: str):
         return f'{self._currFunction()}${label}'
@@ -62,12 +58,12 @@ class CodeWriter:
     def writeBootstrap(self):
         self.writeComment('Bootstrap code')
 
-        CodeWriter._callStack.push(CodeWriter.INIT_FUNC)
+        self._callStack.push(CodeWriter._INIT_FUNC)
 
-        self.constToData(CodeWriter.STACK_POINTER)
+        self.constToData(CodeWriter._STACK_POINTER)
         self.dataToPtr(SEGMENT.SP)
 
-        self.writeCall(CodeWriter.INIT_FUNC, 0)
+        self.writeCall(CodeWriter._INIT_FUNC, 0)
 
     def writeArithmetic(self, command: OP):
         self.writeComment(command)
@@ -83,10 +79,10 @@ class CodeWriter:
             trueLabel, falseLabel = self._createLogicLabels()
 
             self.popD()
-            self.dataToPtr(CodeWriter.TEMP_VAR)
+            self.dataToPtr(CodeWriter._TEMP_VAR)
 
             self.popD()
-            self.commandA(CodeWriter.TEMP_VAR)
+            self.commandA(CodeWriter._TEMP_VAR)
             self.commandDestC('D', 'D-M')
 
             self.commandA(trueLabel)
@@ -105,10 +101,10 @@ class CodeWriter:
         # commands: add, sub, and, or
         else:
             self.popD()
-            self.dataToPtr(CodeWriter.TEMP_VAR)
+            self.dataToPtr(CodeWriter._TEMP_VAR)
 
             self.popD()
-            self.commandA(CodeWriter.TEMP_VAR)
+            self.commandA(CodeWriter._TEMP_VAR)
             self.commandDestC('D', f'D{command}M')
             self.pushD()
 
@@ -123,11 +119,11 @@ class CodeWriter:
             self.pushD()
 
         # segments: local, argument, this, that
-        elif segment in CodeWriter._offsetTable:
-            self.copyPointer(segment, CodeWriter.TEMP_ADDR)
+        elif segment in CodeWriter._mappedSegments:
+            self.copyPointer(segment, CodeWriter._TEMP_ADDR)
 
             self.constToData(index)
-            self.commandA(CodeWriter.TEMP_ADDR)
+            self.commandA(CodeWriter._TEMP_ADDR)
             self.commandDestC('M', 'M+D')
 
             if command is COMMAND.PUSH:
@@ -137,15 +133,15 @@ class CodeWriter:
 
             else:
                 self.popD()
-                self.commandA(CodeWriter.TEMP_ADDR)
+                self.commandA(CodeWriter._TEMP_ADDR)
                 self.dereferencePtr()
                 self.dataToMem()
 
         # segments: static, temp, pointer
         else:
-            # static i in foo.vm = foo.i
+            # static i in file foo.vm = foo.i
             if segment is SEGMENT.STATIC:
-                pointer = f'{self._fileBasename}.{index}'
+                pointer = f'{self._filename}.{index}'
             
             # temp i = RAM[i + 5]
             elif segment is SEGMENT.TEMP:
@@ -163,7 +159,6 @@ class CodeWriter:
                 self.popD()
                 self.dataToPtr(pointer)
 
-    # TO REVISE: bind filename.func$LABEL ??
     def writeLabel(self, label: str):
         self.writeComment(f'label {label}')
         self.commandL(self._createBoundLabel(label))
@@ -179,7 +174,6 @@ class CodeWriter:
         self.commandA(self._createBoundLabel(label))
         self.commandJumpC('D', JUMP.JNE)
 
-    # TO REVISE: save pointer
     def writeCall(self, functionName: str, nArgs: int):
         returnLabel = self._createReturnLabel()
 
@@ -188,7 +182,7 @@ class CodeWriter:
         self.constToData(returnLabel)
         self.pushD()
 
-        for segment in CodeWriter._offsetTable:
+        for segment in CodeWriter._mappedSegments:
             self.savePointer(segment)
 
         self.ptrToData(SEGMENT.SP)
@@ -224,26 +218,13 @@ class CodeWriter:
 
         self.commandL(endLabel)
 
-        CodeWriter._callStack.push(functionName)
+        self._callStack.push(functionName)
 
-    # TO REVISE: offset pointer lookup
     def writeReturn(self):
-        def restorePointer(segment: SEGMENT):
-            self.ptrToData(CodeWriter.END_FRAME)
-            self.commandA(CodeWriter._offsetTable[segment])
-            self.commandDestC('A', 'D-A')
-            self.memToData()
-            self.dataToPtr(segment)
-
         self.writeComment('return')
 
-        self.copyPointer(SEGMENT.LCL, CodeWriter.END_FRAME)
-
-        self.commandA(5)
-        self.commandDestC('A', 'D-A')
-        self.memToData()
-        self.commandA(CodeWriter.RET_ADDR)
-        self.dataToMem()
+        self.copyPointer(SEGMENT.LCL, CodeWriter._END_FRAME)
+        self.restorePointer(CodeWriter._RET_ADDR, 5)
 
         self.popD()
         self.loadArgPtr()
@@ -254,30 +235,28 @@ class CodeWriter:
         self.loadStackPtr()
         self.commandDestC('M', 'D+1')
 
-        for segment in self._offsetTable:
-            restorePointer(segment)
+        for segment, offset in CodeWriter._mappedSegments.items():
+            self.restorePointer(segment, offset)
 
-        self.commandA(CodeWriter.RET_ADDR)
+        self.commandA(CodeWriter._RET_ADDR)
         self.dereferencePtr()
         self.absJump()
 
-        # self._callStack.pop()
 
-
-    def writeCommand(self, command):
+    def writeCommand(self, command: str):
         print(command, file=self._outFile)
 
-    def writeComment(self, comment):
-        if self.commentMode:
+    def writeComment(self, comment: str):
+        if self._commentMode:
             self.writeCommand(f'\n// {comment}')
 
-    def commandA(self, label):
+    def commandA(self, label: SEGMENT | str | int):
         self.writeCommand(f'@{label}')
 
-    def commandDestC(self, dest, comp):
+    def commandDestC(self, dest: str, comp: str | int):
         self.writeCommand(f'{dest}={comp}')
 
-    def commandJumpC(self, comp, jump):
+    def commandJumpC(self, comp: str | int, jump: JUMP):
         self.writeCommand(f'{comp};{jump}')
 
     def commandL(self, label):
@@ -308,7 +287,7 @@ class CodeWriter:
     def loadStackPtr(self):
         self.commandA(SEGMENT.SP)
 
-    def constToData(self, const: SEGMENT | str | int):
+    def constToData(self, const: str | int):
         self.commandA(const)
         self.commandDestC('D', 'A')
 
@@ -321,7 +300,7 @@ class CodeWriter:
         self.dataToMem()
 
 
-    def push(self, elem):
+    def push(self, elem: str | int):
         self.loadStackPtr()
         self.dereferencePtr()
         self.commandDestC('M', elem)
@@ -343,6 +322,15 @@ class CodeWriter:
     def copyPointer(self, src: SEGMENT | str, dest: SEGMENT | str):
         self.ptrToData(src)
         self.dataToPtr(dest)
+
+    def restorePointer(self, pointer: SEGMENT | str, offset: int):
+        if not pointer is CodeWriter._RET_ADDR:
+            self.ptrToData(CodeWriter._END_FRAME)
+
+        self.commandA(offset)
+        self.commandDestC('A', 'D-A')
+        self.memToData()
+        self.dataToPtr(pointer)
 
 
     def closeFile(self):

@@ -35,9 +35,6 @@ class SEGMENT(PrintEnum):
         }
         return _strTable.get(self, super().__str__())
 
-    def printable(self):
-        pass
-
 class JUMP(PrintEnum):
     JMP = 'JMP'
     JEQ = 'JEQ'
@@ -50,11 +47,9 @@ class OP(PrintEnum):
     SUB = 'sub'
     AND = 'and'
     OR = 'or'
-
     EQ = 'eq'
     GT = 'gt'
     LT = 'lt'
-
     NEG = 'neg'
     NOT = 'not'
 
@@ -73,7 +68,7 @@ class OP(PrintEnum):
         return str(_opTable[self])
 
     def isUnaryOp(self):
-        return self is OP.NEG or self is OP.NOT
+        return self in {OP.NEG, OP.NOT}
     
     def isLogicOp(self):
         return self in {OP.EQ, OP.GT, OP.LT}

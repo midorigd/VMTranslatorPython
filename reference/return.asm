@@ -1,6 +1,6 @@
 /* return */
 
-// endFrame is memory address immediately above saved pointers of caller
+// endFrame is memory address immediately below saved pointers of caller
 @LCL
 D=M
 @endFrame
@@ -29,7 +29,7 @@ M=D+1
 @endFrame
 D=M
 
-@{pointerOffset} // THAT = 1, THIS = 2, etc.
+@{pointerOffset} // LCL = 4, ARG = 3, etc.
 A=D-A
 D=M
 @{segment}
@@ -46,8 +46,8 @@ A=M
    GLOBAL STACK
 ------------------
 caller stack
-function args x nArgs <- REPLACE WITH return value
-return address <- move SP here, "erase" memory below return value
+function args x nArgs  <- REPLACE WITH return value
+return address         <- move SP here, "erasing" memory below return value
 saved LCL
 saved ARG
 saved THIS
