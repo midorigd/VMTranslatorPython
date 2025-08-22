@@ -18,6 +18,7 @@ VMTranslator: Drives the translation process
 ### utils
 
 ArrayStack: A simple implementation of a stack
+utils: Helper functions for command line argument processing
 
 ## Building the project
 

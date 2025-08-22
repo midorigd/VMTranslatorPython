@@ -1,15 +1,17 @@
 from src.VMTranslator import VMTranslator
+from utils.utils import *
 
 import sys
 
 def main():
-    if len(sys.argv) == 2:
-        sourceFile = sys.argv[1]
-    else:
-        print('Usage: python3 -m VMTranslator <dirname OR filename.vm>')
+    if not isValidArguments(sys.argv):
+        displayUsage()
         return
 
-    translator = VMTranslator(sourceFile)
+    sourceFile = sys.argv[1]
+    commentMode = (len(sys.argv) == 3)
+
+    translator = VMTranslator(sourceFile, commentMode)
     translator.translateAll()
 
 main()

@@ -6,7 +6,7 @@ import os
 import glob
 
 class VMTranslator:
-    def __init__(self, sourceFile: str, *, commentMode=False):
+    def __init__(self, sourceFile: str, commentMode: bool):
         inFiles, outFile = VMTranslator.fileManager(sourceFile)
         self._inFiles = inFiles
         self._codeWriter = CodeWriter(outFile, commentMode)
