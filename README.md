@@ -31,12 +31,15 @@ cd VMTranslatorPython
 
 ## Running the project
 
-Run one of the following from the project directory:
+Run the following from the project directory:
 
 ```zsh
-python3 -m VMTranslator path/to/dir
-python3 -m VMTranslator path/to/file.vm
+python3 -m VMTranslator <dirname OR filename.vm> [-c]
 ```
+
+### Flags
+
+`-c`: Enables comments in output file
 
 ## Notes
 
