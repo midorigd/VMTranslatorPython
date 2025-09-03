@@ -45,6 +45,10 @@ python3 -m VMTranslator <dirname OR filename.vm> [-c]
 
 My C++ implementation of this project: [VMTranslator (C++)](https://github.com/midorigd/VMTranslatorCpp)
 
+### Stats
+
+583 lines (434 loc)
+
 ## References
 
 [nand2tetris](https://www.nand2tetris.org/course)
